@@ -1,0 +1,48 @@
+<ImportExportXml version="9.2.24042.190" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>Cr79182</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Common Data Services Default Solution" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions />
+    <Version>1.0.3.1</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>Cr62e56</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="CDS Default Publisher" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions />
+      <EMailAddress xsi:nil="true"></EMailAddress>
+      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <CustomizationPrefix>cra1b</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>43805</CustomizationOptionValuePrefix>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="1" schemaName="cra1b_campaigncategory" behavior="0" />
+      <RootComponent type="1" schemaName="cra1b_employeeideacampaignlink" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeidea" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeideasusersetting" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeidea_campaign" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeidea_file" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeidea_image" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeidea_question" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeidea_response" behavior="0" />
+      <RootComponent type="1" schemaName="msft_employeeidea_settings" behavior="0" />
+      <RootComponent type="1" schemaName="systemuser" behavior="2" />
+      <RootComponent type="9" schemaName="msft_employeeidea_campaignstatuscode" behavior="0" />
+      <RootComponent type="9" schemaName="msft_employeeidea_outcomecode" behavior="0" />
+      <RootComponent type="9" schemaName="msft_employeeidea_responsetypecode" behavior="0" />
+      <RootComponent type="29" id="{07e16779-25e5-ee11-904c-6045bd0d2328}" behavior="0" />
+      <RootComponent type="300" schemaName="msft_employeeideasmanager_f172c" behavior="0" />
+      <RootComponent type="300" schemaName="msft_employeeideas_955d7" behavior="0" />
+      <RootComponent type="431" schemaName="msft_employeeidea msft_coverimage" behavior="0" />
+      <RootComponent type="431" schemaName="msft_employeeidea_campaign msft_coverimage" behavior="0" />
+      <RootComponent type="431" schemaName="msft_employeeidea_image msft_image" behavior="0" />
+      <RootComponent type="432" schemaName="msft_employeeidea" behavior="0" />
+      <RootComponent type="432" schemaName="msft_employeeidea_campaign" behavior="0" />
+      <RootComponent type="432" schemaName="msft_employeeidea_image" behavior="0" />
+    </RootComponents>
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>

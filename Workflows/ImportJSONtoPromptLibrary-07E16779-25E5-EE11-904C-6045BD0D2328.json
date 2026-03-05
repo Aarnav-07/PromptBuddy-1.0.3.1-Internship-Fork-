@@ -1,0 +1,579 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "cra1b_sharedcommondataserviceforapps_c6b63"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "3bf5f587-c6ab-46c0-adea-9c3965cdee90"
+          },
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "JSON",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Please enter your input",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Parse_JSON": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "e01a398f-0840-4c7a-a06d-3e542ac9a914"
+          },
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@triggerBody()['text']",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "Prompt": {
+                    "type": "string"
+                  },
+                  "Category": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "Title",
+                  "Description",
+                  "Prompt",
+                  "Category"
+                ]
+              }
+            }
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@body('Parse_JSON')",
+          "actions": {
+            "Find_Campaign": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "b698eab9-7801-481f-8c84-2eb84e8dddde"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "msft_employeeidea_campaigns",
+                  "$filter": "msft_name eq '@{items('Apply_to_each')['Category']}'"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Add_a_new_idea": {
+              "runAfter": {
+                "Parse_Campaign_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "6996a2b8-07ce-4183-89de-0c1d1206bda1"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "msft_employeeideas",
+                  "item/msft_name": "@items('Apply_to_each')['Title']",
+                  "item/msft_attachmentcount": 0,
+                  "item/msft_EmployeeIdea_CampaignId@odata.bind": "msft_employeeidea_campaigns(@{body('Parse_Campaign_JSON')?['msft_employeeidea_campaignid']})",
+                  "item/msft_description": "@items('Apply_to_each')['Description']",
+                  "item/msft_appref_icon": "appres://resources/StockIdeaImage",
+                  "item/cra1b_imported": true,
+                  "item/msft_isposttoteams": false,
+                  "item/msft_votecount": 0
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Find_prompt_reference": {
+              "runAfter": {
+                "Add_a_new_idea": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "d048c8df-01d4-4266-adb0-16cfef1e35b6"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "msft_employeeidea_questions",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Add_a_new_prompt_response": {
+              "runAfter": {
+                "Find_prompt_reference": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "4e3fc135-d1dc-4014-9eae-30aa371d91a6"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "msft_employeeidea_responses",
+                  "item/msft_EmployeeIdeaId@odata.bind": "msft_employeeideas(@{outputs('Add_a_new_idea')?['body/msft_employeeideaid']})",
+                  "item/msft_name": "Prompt",
+                  "item/msft_responsetext": "@items('Apply_to_each')['Prompt']",
+                  "item/msft_employeeidea_responsetypecode": 299600002
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Parse_Campaign_JSON": {
+              "runAfter": {
+                "Find_Campaign": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "a722f314-14b1-4e97-b176-eb450a0297eb"
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@first(outputs('Find_Campaign')?['body/value'])",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "@@odata.type": {
+                      "type": "string"
+                    },
+                    "@@odata.id": {
+                      "type": "string"
+                    },
+                    "@@odata.etag": {
+                      "type": "string"
+                    },
+                    "@@odata.editLink": {
+                      "type": "string"
+                    },
+                    "msft_appref_icon": {
+                      "type": "string"
+                    },
+                    "_cra1b_category_value@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "_cra1b_category_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                      "type": "string"
+                    },
+                    "_cra1b_category_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                      "type": "string"
+                    },
+                    "_cra1b_category_value@odata.type": {
+                      "type": "string"
+                    },
+                    "_cra1b_category_value": {
+                      "type": "string"
+                    },
+                    "msft_employeeideas_channelid": {
+                      "type": "string"
+                    },
+                    "statuscode@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "statuscode": {
+                      "type": "integer"
+                    },
+                    "createdon@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "createdon@odata.type": {
+                      "type": "string"
+                    },
+                    "createdon": {
+                      "type": "string"
+                    },
+                    "statecode@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "statecode": {
+                      "type": "integer"
+                    },
+                    "_ownerid_value@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "_ownerid_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                      "type": "string"
+                    },
+                    "_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                      "type": "string"
+                    },
+                    "_ownerid_value@odata.type": {
+                      "type": "string"
+                    },
+                    "_ownerid_value": {
+                      "type": "string"
+                    },
+                    "msft_campaignstartdate@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "msft_campaignstartdate@odata.type": {
+                      "type": "string"
+                    },
+                    "msft_campaignstartdate": {
+                      "type": "string"
+                    },
+                    "modifiedon@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "modifiedon@odata.type": {
+                      "type": "string"
+                    },
+                    "modifiedon": {
+                      "type": "string"
+                    },
+                    "versionnumber@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "versionnumber@odata.type": {
+                      "type": "string"
+                    },
+                    "versionnumber": {
+                      "type": "integer"
+                    },
+                    "_owningbusinessunit_value@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "_owningbusinessunit_value@Microsoft.Dynamics.CRM.associatednavigationproperty": {
+                      "type": "string"
+                    },
+                    "_owningbusinessunit_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                      "type": "string"
+                    },
+                    "_owningbusinessunit_value@odata.type": {
+                      "type": "string"
+                    },
+                    "_owningbusinessunit_value": {
+                      "type": "string"
+                    },
+                    "timezoneruleversionnumber@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "timezoneruleversionnumber": {
+                      "type": "integer"
+                    },
+                    "msft_employeeideas_teamid": {
+                      "type": "string"
+                    },
+                    "_modifiedby_value@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "_modifiedby_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                      "type": "string"
+                    },
+                    "_modifiedby_value@odata.type": {
+                      "type": "string"
+                    },
+                    "_modifiedby_value": {
+                      "type": "string"
+                    },
+                    "msft_campaignenddate@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "msft_campaignenddate@odata.type": {
+                      "type": "string"
+                    },
+                    "msft_campaignenddate": {
+                      "type": "string"
+                    },
+                    "msft_description": {
+                      "type": "string"
+                    },
+                    "msft_calc_daysuntilend@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "msft_calc_daysuntilend": {
+                      "type": "integer"
+                    },
+                    "_createdby_value@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "_createdby_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                      "type": "string"
+                    },
+                    "_createdby_value@odata.type": {
+                      "type": "string"
+                    },
+                    "_createdby_value": {
+                      "type": "string"
+                    },
+                    "msft_calc_daysuntilstart@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "msft_calc_daysuntilstart": {
+                      "type": "integer"
+                    },
+                    "msft_isposttoteams@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "msft_isposttoteams": {
+                      "type": "boolean"
+                    },
+                    "msft_employeeidea_campaignid@odata.type": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaignid": {
+                      "type": "string"
+                    },
+                    "_owninguser_value@Microsoft.Dynamics.CRM.lookuplogicalname": {
+                      "type": "string"
+                    },
+                    "_owninguser_value@odata.type": {
+                      "type": "string"
+                    },
+                    "_owninguser_value": {
+                      "type": "string"
+                    },
+                    "msft_name": {
+                      "type": "string"
+                    },
+                    "msft_calc_employeeidea_campaignstatuscode@OData.Community.Display.V1.FormattedValue": {
+                      "type": "string"
+                    },
+                    "msft_calc_employeeidea_campaignstatuscode": {
+                      "type": "integer"
+                    },
+                    "cra1b_Category@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "cra1b_Category@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "ownerid@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "ownerid@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "owningbusinessunit@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "owningbusinessunit@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "createdby@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "createdby@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "createdonbehalfby@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "createdonbehalfby@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "modifiedby@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "modifiedby@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "modifiedonbehalfby@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "modifiedonbehalfby@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "owninguser@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "owninguser@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "owningteam@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "owningteam@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_AsyncOperations@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_AsyncOperations@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_UserEntityInstanceDatas@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_UserEntityInstanceDatas@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_ProcessSession@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_ProcessSession@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_BulkDeleteFailures@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_BulkDeleteFailures@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_PrincipalObjectAttributeAccesses@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_employeeidea_campaign_PrincipalObjectAttributeAccesses@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_coverimageid_imagedescriptor@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_coverimageid_imagedescriptor@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_msft_empidea_campaign_msft_empidea@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_msft_empidea_campaign_msft_empidea@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "msft_msft_empidea_campaign_msft_empidea_questi@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "msft_msft_empidea_campaign_msft_empidea_questi@odata.navigationLink": {
+                      "type": "string"
+                    },
+                    "cra1b_employeeideacampaignlink_LinkedCampaign_m@odata.associationLink": {
+                      "type": "string"
+                    },
+                    "cra1b_employeeideacampaignlink_LinkedCampaign_m@odata.navigationLink": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "Link_prompt_to_campaign": {
+              "runAfter": {
+                "Add_a_new_prompt_response": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "fdc4ffe5-e248-4ac1-b4ec-7e873ddadc43"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra1b_employeeideacampaignlinks",
+                  "item/cra1b_LinkedCampaign@odata.bind": "msft_employeeidea_campaigns(@{body('Parse_Campaign_JSON')?['msft_employeeidea_campaignid']})",
+                  "item/cra1b_LinkedIdea@odata.bind": "msft_employeeideas(@{outputs('Add_a_new_idea')?['body/msft_employeeideaid']})"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "Parse_JSON": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "e93fcdce-3ce4-4ec6-b3b5-4bdd358595a8"
+          },
+          "type": "Foreach"
+        },
+        "Respond_to_a_PowerApp_or_flow": {
+          "runAfter": {
+            "Apply_to_each": [
+              "Succeeded",
+              "Skipped",
+              "Failed",
+              "TimedOut"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "bb08a06d-ea1d-4508-95ea-47e0b8dde0fb"
+          },
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {},
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}
